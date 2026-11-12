@@ -1,106 +1,160 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Лиза ♥ </title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Лиза ♥</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Inter:wght@400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div id="hearts" aria-hidden="true"></div>
 
-<div id="hearts" aria-hidden="true"></div>
+        <main class="wrap">
+            <p class="eyebrow"></p>
 
-<main class="wrap">
+            <h1>Лиза <span class="heart-inline">♥</span></h1>
+            <p class="sub">
+                вместе с <b>12 сентября 2026</b> — и это только начало
+            </p>
 
-  <p class="eyebrow"></p>
+            <section class="card counter" aria-labelledby="counter-title">
+                <p class="counter__lead" id="counter-title">
+                    Мы вместе уже <strong id="daysBig">0</strong> дней
+                </p>
 
-  <h1>Лиза <span class="heart-inline">♥</span></h1>
-  <p class="sub">
-    вместе с <b>12 сентября 2026</b> — и это только начало
-  </p>
+                <div
+                    class="tiles"
+                    role="group"
+                    aria-label="Точное время вместе"
+                >
+                    <div class="tile">
+                        <div class="tile__num" id="tDays">0</div>
+                        <div class="tile__lbl">дней</div>
+                    </div>
+                    <div class="tile">
+                        <div class="tile__num" id="tHours">0</div>
+                        <div class="tile__lbl">часов</div>
+                    </div>
+                    <div class="tile">
+                        <div class="tile__num" id="tMins">0</div>
+                        <div class="tile__lbl">минут</div>
+                    </div>
+                    <div class="tile">
+                        <div class="tile__num" id="tSecs">0</div>
+                        <div class="tile__lbl">секунд</div>
+                    </div>
+                </div>
 
-  <section class="card counter" aria-labelledby="counter-title">
-    <p class="counter__lead" id="counter-title">
-      Мы вместе уже <strong id="daysBig">0</strong> дней
-    </p>
+                <div class="next" id="nextBox">
+                    <span class="pill" id="nextPill">—</span>
+                    <span id="nextText">считаю…</span>
+                </div>
+            </section>
 
-    <div class="tiles" role="group" aria-label="Точное время вместе">
-      <div class="tile"><div class="tile__num" id="tDays">0</div><div class="tile__lbl">дней</div></div>
-      <div class="tile"><div class="tile__num" id="tHours">0</div><div class="tile__lbl">часов</div></div>
-      <div class="tile"><div class="tile__num" id="tMins">0</div><div class="tile__lbl">минут</div></div>
-      <div class="tile"><div class="tile__num" id="tSecs">0</div><div class="tile__lbl">секунд</div></div>
-    </div>
+            <div class="section-head">
+                <h2>Наши моменты</h2>
+                <button class="btn" id="addBtn" type="button">
+                    + Добавить момент
+                </button>
+                <p>
+                    Всё, что хочется сохранить. Видно всем, кто откроет эту
+                    страницу.
+                </p>
+            </div>
 
-    <div class="next" id="nextBox">
-      <span class="pill" id="nextPill">—</span>
-      <span id="nextText">считаю…</span>
-    </div>
-  </section>
+            <p class="sync" id="sync" role="status" hidden></p>
 
-  <div class="section-head">
-    <h2>Наши моменты</h2>
-    <button class="btn" id="addBtn" type="button">+ Добавить момент</button>
-    <p>Всё, что хочется сохранить. Хранится прямо в этом браузере.</p>
-  </div>
+            <ul class="timeline" id="timeline"></ul>
+            <div class="empty card" id="empty" hidden>
+                <span>🤍</span>
+            </div>
 
-  <ul class="timeline" id="timeline"></ul>
-  <div class="empty card" id="empty" hidden>
-    <span>🤍</span>
-    
-  </div>
+            <footer>
+                <span class="sig">сделано с любовью</span><br />
+                для Лизы
+            </footer>
+        </main>
 
-  <footer>
-    <span class="sig">сделано с любовью</span><br>
-    для Лизы
-  </footer>
+        <dialog id="dlg">
+            <form class="form" id="form" method="dialog">
+                <h3>Новый момент</h3>
+                <p class="hint">
+                    Дата, событие — и пара слов, чтобы потом перечитать.
+                </p>
 
-</main>
+                <div class="row">
+                    <div class="field">
+                        <label for="fEmoji">Эмодзи</label>
+                        <input
+                            id="fEmoji"
+                            name="emoji"
+                            maxlength="4"
+                            value="💌"
+                            autocomplete="off"
+                        />
+                    </div>
+                    <div class="field">
+                        <label for="fDate">Дата</label>
+                        <input id="fDate" name="date" type="date" required />
+                    </div>
+                </div>
 
-<dialog id="dlg">
-  <form class="form" id="form" method="dialog">
-    <h3>Новый момент</h3>
-    <p class="hint">Дата, событие — и пара слов, чтобы потом перечитать.</p>
+                <div
+                    class="emojis"
+                    id="emojiPicker"
+                    aria-label="Быстрый выбор эмодзи"
+                >
+                    <button type="button">💌</button>
+                    <button type="button">🌹</button>
+                    <button type="button">☕</button>
+                    <button type="button">🎬</button>
+                    <button type="button">✈️</button>
+                    <button type="button">🎂</button>
+                    <button type="button">🌙</button>
+                    <button type="button">🐱</button>
+                    <button type="button">🍕</button>
+                    <button type="button">💍</button>
+                </div>
 
-    <div class="row">
-      <div class="field">
-        <label for="fEmoji">Эмодзи</label>
-        <input id="fEmoji" name="emoji" maxlength="4" value="💌" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="fDate">Дата</label>
-        <input id="fDate" name="date" type="date" required>
-      </div>
-    </div>
+                <div class="field" style="margin-top: 16px">
+                    <label for="fTitle">Что это было</label>
+                    <input
+                        id="fTitle"
+                        name="title"
+                        required
+                        maxlength="80"
+                        placeholder="Наша первая прогулка"
+                    />
+                </div>
 
-    <div class="emojis" id="emojiPicker" aria-label="Быстрый выбор эмодзи">
-      <button type="button">💌</button><button type="button">🌹</button>
-      <button type="button">☕</button><button type="button">🎬</button>
-      <button type="button">✈️</button><button type="button">🎂</button>
-      <button type="button">🌙</button><button type="button">🐱</button>
-      <button type="button">🍕</button><button type="button">💍</button>
-      
-    </div>
+                <div class="field">
+                    <label for="fNote">Заметка</label>
+                    <textarea
+                        id="fNote"
+                        name="note"
+                        maxlength="600"
+                        placeholder="Ты смеялась над той собакой…"
+                    ></textarea>
+                </div>
 
-    <div class="field" style="margin-top:16px">
-      <label for="fTitle">Что это было</label>
-      <input id="fTitle" name="title" required maxlength="80" placeholder="Наша первая прогулка">
-    </div>
+                <p class="form__err" id="formErr" role="alert" hidden></p>
 
-    <div class="field">
-      <label for="fNote">Заметка</label>
-      <textarea id="fNote" name="note" maxlength="600" placeholder="Ты смеялась над той собакой…"></textarea>
-    </div>
+                <div class="form__actions">
+                    <button class="btn btn--ghost" type="button" id="cancelBtn">
+                        Отмена
+                    </button>
+                    <button class="btn" type="submit">Сохранить</button>
+                </div>
+            </form>
+        </dialog>
 
-    <div class="form__actions">
-      <button class="btn btn--ghost" type="button" id="cancelBtn">Отмена</button>
-      <button class="btn" type="submit">Сохранить</button>
-    </div>
-  </form>
-</dialog>
-
-<script src="script.js"></script>
-</body>
+        <script src="config.js"></script>
+        <script src="script.js"></script>
+    </body>
 </html>

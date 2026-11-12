@@ -2,7 +2,25 @@
     "use strict";
 
     const START = new Date(2026, 8, 12, 13, 34, 0);
-    const STORE_KEY = "liza.moments.v1";
+
+    // --- Общая база моментов (Supabase). Значения задаются в config.js ---
+    const CFG = window.APP_CONFIG || {};
+    const API = String(CFG.SUPABASE_URL || "")
+        .trim()
+        .replace(/\/+$/, "")
+        .replace(/\/rest\/v1$/i, "") // URL можно вставлять и с /rest/v1 на конце
+        .replace(/\/+$/, "");
+
+    const RAW_KEY = String(CFG.SUPABASE_ANON_KEY || "").trim();
+    // Secret/service-ключ нельзя отдавать в браузер: он даёт полный доступ к базе.
+    const KEY_IS_SECRET = /^sb_secret_/i.test(RAW_KEY);
+    const ANON = KEY_IS_SECRET ? "" : RAW_KEY;
+    const ONLINE = Boolean(API && ANON);
+    const TABLE = "moments";
+
+    const STORE_KEY = "liza.moments.v1"; // моменты этого браузера (до перехода на общую базу)
+    const CACHE_KEY = "liza.moments.cache.v1"; // копия общей ленты на случай офлайна
+    const MIGRATED_KEY = "liza.moments.migrated.v1";
 
     const $ = (id) => document.getElementById(id);
 
@@ -23,9 +41,15 @@
         emojiPicker: $("emojiPicker"),
         fEmoji: $("fEmoji"),
         fDate: $("fDate"),
+        sync: $("sync"),
+        formErr: $("formErr"),
+        submitBtn: document.querySelector('#form button[type="submit"]'),
     };
 
     const pad = (n) => String(n).padStart(2, "0");
+
+    const newId = () =>
+        "m-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
     function nextMonthiversary(now) {
         let d = new Date(now.getFullYear(), now.getMonth(), 12, 13, 34, 0);
@@ -99,7 +123,8 @@
         },
     ];
 
-    function load() {
+    // ---------- локальное хранилище ----------
+    function loadLocal() {
         try {
             const raw = localStorage.getItem(STORE_KEY);
             if (!raw) return DEFAULTS.slice();
@@ -110,15 +135,87 @@
         }
     }
 
-    function save(list) {
+    function saveLocal(list) {
         try {
             localStorage.setItem(STORE_KEY, JSON.stringify(list));
         } catch (e) {
-            console.warn("Не удалось сохранить:", e);
+            console.warn("Не удалось сохранить локально:", e);
         }
     }
 
-    let moments = load();
+    function loadCache() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(CACHE_KEY) || "[]");
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function saveCache(list) {
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(list));
+        } catch {
+            /* кеш не критичен */
+        }
+    }
+
+    // ---------- запросы к общей базе ----------
+    const apiHeaders = (extra) => ({
+        apikey: ANON,
+        Authorization: "Bearer " + ANON,
+        "Content-Type": "application/json",
+        ...extra,
+    });
+
+    const fromRow = (r) => ({
+        id: r.id,
+        emoji: r.emoji || "💌",
+        date: r.date,
+        title: r.title,
+        note: r.note || "",
+        key: Boolean(r.is_key),
+    });
+
+    const toRow = (m) => ({
+        id: m.id,
+        emoji: m.emoji || "💌",
+        date: m.date,
+        title: m.title,
+        note: m.note || "",
+        is_key: Boolean(m.key),
+    });
+
+    async function apiList() {
+        const res = await fetch(
+            `${API}/rest/v1/${TABLE}?select=id,emoji,date,title,note,is_key&order=date.asc,created_at.asc`,
+            { headers: apiHeaders() },
+        );
+        if (!res.ok) throw new Error(`GET ${res.status}: ${await res.text()}`);
+        return (await res.json()).map(fromRow);
+    }
+
+    async function apiCreate(moment) {
+        const res = await fetch(`${API}/rest/v1/${TABLE}`, {
+            method: "POST",
+            headers: apiHeaders({ Prefer: "return=representation" }),
+            body: JSON.stringify(toRow(moment)),
+        });
+        if (!res.ok) throw new Error(`POST ${res.status}: ${await res.text()}`);
+        const rows = await res.json();
+        return rows[0] ? fromRow(rows[0]) : moment;
+    }
+
+    async function apiDelete(id) {
+        const res = await fetch(
+            `${API}/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`,
+            { method: "DELETE", headers: apiHeaders() },
+        );
+        if (!res.ok)
+            throw new Error(`DELETE ${res.status}: ${await res.text()}`);
+    }
+
+    let moments = ONLINE ? loadCache() : loadLocal();
 
     const MONTHS = [
         "января",
@@ -194,11 +291,33 @@
             del.textContent = "×";
             del.title = "Удалить";
             del.setAttribute("aria-label", "Удалить момент: " + m.title);
-            del.addEventListener("click", () => {
+            del.addEventListener("click", async () => {
                 if (!confirm("Удалить «" + m.title + "»?")) return;
+
+                if (!ONLINE) {
+                    moments = moments.filter((x) => x.id !== m.id);
+                    saveLocal(moments);
+                    render();
+                    return;
+                }
+
+                const prev = moments;
                 moments = moments.filter((x) => x.id !== m.id);
-                save(moments);
                 render();
+
+                try {
+                    await apiDelete(m.id);
+                    saveCache(moments);
+                    setStatus("");
+                } catch (e) {
+                    console.warn(e);
+                    moments = prev;
+                    render();
+                    setStatus(
+                        "Не удалось удалить момент — попробуй ещё раз.",
+                        "error",
+                    );
+                }
             });
 
             top.append(emoji, head, del);
@@ -218,12 +337,112 @@
         el.timeline.append(frag);
     }
 
+    // ---------- состояние общей ленты ----------
+    function setStatus(text, tone) {
+        if (!el.sync) return;
+        el.sync.hidden = !text;
+        el.sync.textContent = text || "";
+        el.sync.dataset.tone = tone || "info";
+    }
+
+    function showFormError(text) {
+        if (!el.formErr) return;
+        el.formErr.hidden = !text;
+        el.formErr.textContent = text || "";
+    }
+
+    function setBusy(busy) {
+        if (!el.submitBtn) return;
+        el.submitBtn.disabled = busy;
+        el.submitBtn.textContent = busy ? "Сохраняю…" : "Сохранить";
+    }
+
+    // Моменты, которые были сохранены в этом браузере до появления общей базы.
+    function readLegacyLocal() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(STORE_KEY) || "[]");
+            if (!Array.isArray(parsed)) return [];
+            return parsed.filter((m) => m && m.id && m.title && m.date);
+        } catch {
+            return [];
+        }
+    }
+
+    async function migrateLocalOnce(remote) {
+        if (localStorage.getItem(MIGRATED_KEY)) return remote;
+
+        const legacy = readLegacyLocal();
+        const knownIds = new Set(remote.map((m) => m.id));
+        const knownKeys = new Set(remote.map((m) => m.date + "|" + m.title));
+        const pending = legacy.filter(
+            (m) =>
+                !knownIds.has(m.id) && !knownKeys.has(m.date + "|" + m.title),
+        );
+
+        let failed = false;
+        for (const m of pending) {
+            try {
+                await apiCreate(m);
+            } catch (e) {
+                console.warn("Не удалось перенести момент в общую базу:", e);
+                failed = true;
+            }
+        }
+
+        if (!failed) localStorage.setItem(MIGRATED_KEY, "1");
+        return pending.length && !failed ? apiList() : remote;
+    }
+
+    let syncing = false;
+
+    async function sync() {
+        if (!ONLINE || syncing) return;
+        syncing = true;
+
+        if (!moments.length) setStatus("загружаю моменты…");
+
+        try {
+            const remote = await apiList();
+            moments = await migrateLocalOnce(remote);
+            saveCache(moments);
+            render();
+            setStatus("");
+        } catch (e) {
+            console.warn(e);
+            setStatus(
+                "Сервер недоступен — показана сохранённая копия. Новый момент может не сохраниться.",
+                "error",
+            );
+        } finally {
+            syncing = false;
+        }
+    }
+
     render();
+
+    if (ONLINE) {
+        sync();
+    } else if (KEY_IS_SECRET) {
+        setStatus(
+            "В config.js вставлен secret key. Он даёт полный доступ к базе и не должен быть в браузере — замени его на anon public / publishable key. Пока моменты видны только в этом браузере.",
+            "error",
+        );
+    } else {
+        setStatus(
+            "Общая лента не подключена: заполни SUPABASE_URL и SUPABASE_ANON_KEY в config.js. Пока моменты видны только в этом браузере.",
+            "error",
+        );
+    }
+
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) sync();
+    });
 
     el.fDate.value = new Date().toISOString().slice(0, 10);
 
     el.addBtn.addEventListener("click", () => {
         el.form.reset();
+        showFormError("");
         el.fEmoji.value = "💌";
         el.fDate.value = new Date().toISOString().slice(0, 10);
         el.dlg.showModal();
@@ -237,7 +456,7 @@
         if (btn) el.fEmoji.value = btn.textContent.trim();
     });
 
-    el.form.addEventListener("submit", (e) => {
+    el.form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const fd = new FormData(el.form);
 
@@ -245,20 +464,40 @@
         const date = String(fd.get("date") || "").trim();
         if (!title || !date) return;
 
-        moments.push({
-            id:
-                "m-" +
-                Date.now().toString(36) +
-                Math.random().toString(36).slice(2, 6),
+        const moment = {
+            id: newId(),
             emoji: String(fd.get("emoji") || "💌").trim() || "💌",
             date,
             title,
             note: String(fd.get("note") || "").trim(),
-        });
+        };
 
-        save(moments);
-        render();
-        el.dlg.close();
+        showFormError("");
+
+        // Без настроек общей базы — как раньше, только в этом браузере.
+        if (!ONLINE) {
+            moments.push(moment);
+            saveLocal(moments);
+            render();
+            el.dlg.close();
+            return;
+        }
+
+        setBusy(true);
+        try {
+            const saved = await apiCreate(moment);
+            moments.push(saved);
+            saveCache(moments);
+            render();
+            el.dlg.close();
+        } catch (err) {
+            console.warn(err);
+            showFormError(
+                "Не получилось сохранить: сервер не ответил. Проверь интернет и попробуй ещё раз.",
+            );
+        } finally {
+            setBusy(false);
+        }
     });
 
     const heartsBox = $("hearts");
@@ -281,8 +520,3 @@
         setInterval(spawn, 1100);
     }
 })();
-
-
-
-
-
