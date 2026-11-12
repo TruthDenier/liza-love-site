@@ -68,6 +68,30 @@
                 </p>
             </div>
 
+            <div class="who" id="who" hidden>
+                <div class="who__guest" id="whoGuest">
+                    <span class="who__hint">
+                        Представься, чтобы добавлять и править моменты
+                    </span>
+                    <button
+                        class="btn btn--ghost btn--sm"
+                        id="loginBtn"
+                        type="button"
+                    >
+                        Войти
+                    </button>
+                </div>
+                <div class="who__me" id="whoMe" hidden>
+                    <span class="who__avatar" id="whoAvatar" aria-hidden="true"
+                        >♥</span
+                    >
+                    <span class="who__name">ты — <b id="whoName"></b></span>
+                    <button class="who__out" id="logoutBtn" type="button">
+                        выйти
+                    </button>
+                </div>
+            </div>
+
             <p class="sync" id="sync" role="status" hidden></p>
 
             <ul class="timeline" id="timeline"></ul>
@@ -83,8 +107,8 @@
 
         <dialog id="dlg">
             <form class="form" id="form" method="dialog">
-                <h3>Новый момент</h3>
-                <p class="hint">
+                <h3 id="dlgTitle">Новый момент</h3>
+                <p class="hint" id="dlgHint">
                     Дата, событие — и пара слов, чтобы потом перечитать.
                 </p>
 
@@ -112,14 +136,49 @@
                 >
                     <button type="button">💌</button>
                     <button type="button">🌹</button>
-                    <button type="button">☕</button>
-                    <button type="button">🎬</button>
-                    <button type="button">✈️</button>
-                    <button type="button">🎂</button>
-                    <button type="button">🌙</button>
-                    <button type="button">🐱</button>
+                    <button type="button">💐</button>
+                    <button type="button">🌸</button>
+                    <button type="button">🌻</button>
+                    <button type="button">🍫</button>
+                    <button type="button">🍓</button>
+                    <button type="button">🍒</button>
+                    <button type="button">🥐</button>
+                    <button type="button">🍦</button>
                     <button type="button">🍕</button>
+                    <button type="button">☕</button>
+                    <button type="button">🥂</button>
+                    <button type="button">🎂</button>
+                    <button type="button">🎁</button>
+                    <button type="button">🎈</button>
+                    <button type="button">🎉</button>
+                    <button type="button">🎆</button>
+                    <button type="button">🕯️</button>
+                    <button type="button">🧸</button>
                     <button type="button">💍</button>
+                    <button type="button">📸</button>
+                    <button type="button">🎵</button>
+                    <button type="button">🎬</button>
+                    <button type="button">🎮</button>
+                    <button type="button">🎳</button>
+                    <button type="button">⚽</button>
+                    <button type="button">🚲</button>
+                    <button type="button">🚗</button>
+                    <button type="button">✈️</button>
+                    <button type="button">🏖️</button>
+                    <button type="button">⛰️</button>
+                    <button type="button">🌊</button>
+                    <button type="button">🌈</button>
+                    <button type="button">🌙</button>
+                    <button type="button">⭐</button>
+                    <button type="button">✨</button>
+                    <button type="button">🐱</button>
+                    <button type="button">🐶</button>
+                    <button type="button">🐰</button>
+                    <button type="button">🦋</button>
+                    <button type="button">💋</button>
+                    <button type="button">🤍</button>
+                    <button type="button">😂</button>
+                    <button type="button">🥰</button>
                 </div>
 
                 <div class="field" style="margin-top: 16px">
@@ -143,6 +202,30 @@
                     ></textarea>
                 </div>
 
+                <div class="field" id="photoField" hidden>
+                    <label for="fPhoto">Фото</label>
+                    <input
+                        id="fPhoto"
+                        name="photo"
+                        type="file"
+                        accept="image/*"
+                    />
+                    <p class="field__hint">
+                        Одно фото. Уменьшится автоматически перед загрузкой.
+                    </p>
+                    <div class="photo" id="photoBox" hidden>
+                        <img id="photoImg" alt="Выбранное фото" />
+                        <button
+                            class="photo__del"
+                            type="button"
+                            id="photoClear"
+                            aria-label="Убрать фото"
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+
                 <p class="form__err" id="formErr" role="alert" hidden></p>
 
                 <div class="form__actions">
@@ -150,6 +233,61 @@
                         Отмена
                     </button>
                     <button class="btn" type="submit">Сохранить</button>
+                </div>
+            </form>
+        </dialog>
+
+        <dialog id="authDlg">
+            <form class="form" id="authForm">
+                <h3>Кто ты?</h3>
+                <p class="hint">
+                    Простая регистрация: имя и PIN. Нужна, чтобы у моментов был
+                    автор.
+                </p>
+
+                <div class="field">
+                    <label for="aName">Имя</label>
+                    <input
+                        id="aName"
+                        maxlength="24"
+                        autocomplete="nickname"
+                        placeholder="Лиза"
+                        required
+                    />
+                </div>
+
+                <div class="field">
+                    <label for="aPin">PIN</label>
+                    <input
+                        id="aPin"
+                        type="password"
+                        inputmode="numeric"
+                        minlength="4"
+                        maxlength="12"
+                        autocomplete="current-password"
+                        placeholder="4–12 символов"
+                        required
+                    />
+                </div>
+
+                <p class="form__err" id="authErr" role="alert" hidden></p>
+
+                <div class="form__actions">
+                    <button
+                        class="btn btn--ghost"
+                        type="button"
+                        id="authCancel"
+                    >
+                        Отмена
+                    </button>
+                    <button
+                        class="btn btn--ghost"
+                        type="button"
+                        id="authRegister"
+                    >
+                        Создать
+                    </button>
+                    <button class="btn" type="submit">Войти</button>
                 </div>
             </form>
         </dialog>
