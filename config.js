@@ -17,4 +17,19 @@
 window.APP_CONFIG = {
     SUPABASE_URL: "https://mqpghdedqlzxouxeztew.supabase.co",
     SUPABASE_ANON_KEY: "sb_publishable_NEREpm9iNunX5tGxYY4JZQ_G132iQ2k",
+
+    // Музыка: ссылки на трек, альбом или публичный плейлист Яндекс Музыки.
+    // Ссылку бери из приложения: «Поделиться» -> «Скопировать ссылку».
+    //
+    // Одна ссылка:
+    // MUSIC: "https://music.yandex.ru/album/1339814/track/10994777",
+    //
+    // Несколько — появятся кнопки переключения:
+    // MUSIC: [
+    //     { title: "Наша песня", url: "https://music.yandex.ru/album/1339814/track/10994777" },
+    //     { title: "Плейлист", url: "https://music.yandex.ru/users/music-blog/playlists/2489" },
+    // ],
+    //
+    // Пока список пуст, блок «Наша музыка» на странице не показывается.
+    MUSIC: [],
 };

@@ -363,6 +363,97 @@ h2 {
     text-underline-offset: 3px;
 }
 
+.music {
+    margin-top: clamp(20px, 4vw, 30px);
+    padding: clamp(18px, 4vw, 26px);
+}
+.music__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.music__title {
+    font-size: clamp(20px, 5vw, 26px);
+    margin: 0;
+}
+.music__tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+.music__tab {
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    border-radius: 999px;
+    border: 1px solid rgba(225, 29, 116, 0.18);
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--plum-soft);
+    padding: 7px 14px;
+    cursor: pointer;
+    transition:
+        background 0.16s ease,
+        color 0.16s ease,
+        transform 0.16s ease;
+}
+.music__tab:hover {
+    transform: translateY(-1px);
+    color: var(--pink-600);
+}
+.music__tab[aria-pressed="true"] {
+    background: linear-gradient(120deg, var(--pink-600), #b4299a);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 10px 22px -14px rgba(225, 29, 116, 0.85);
+}
+.music__tab:focus-visible {
+    outline: 3px solid var(--pink-400);
+    outline-offset: 2px;
+}
+.music__frame {
+    border-radius: 18px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(225, 29, 116, 0.12);
+    box-shadow: 0 14px 34px -26px rgba(160, 40, 100, 0.9);
+}
+.music__frame iframe {
+    display: block;
+    width: 100%;
+    height: 200px;
+    border: 0;
+}
+.music--album .music__frame iframe {
+    height: 460px;
+}
+.music--playlist .music__frame iframe {
+    height: 500px;
+}
+.music__foot {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--plum-soft);
+}
+.music__open {
+    color: var(--pink-600);
+    font-weight: 600;
+    text-decoration: none;
+}
+.music__open:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.music__note {
+    opacity: 0.75;
+}
+
 .timeline {
     list-style: none;
     margin: 26px 0 0;
@@ -787,6 +878,15 @@ footer .sig {
     }
     .who__out {
         margin-left: 0;
+    }
+    .music__tabs {
+        margin-left: 0;
+    }
+    .music--album .music__frame iframe {
+        height: 400px;
+    }
+    .music--playlist .music__frame iframe {
+        height: 420px;
     }
 }
 
